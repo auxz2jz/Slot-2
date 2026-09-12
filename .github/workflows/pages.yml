@@ -23,6 +23,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Validate JavaScript
+        shell: bash
+        run: |
+          node --check core.js
+          node --check nes1.js
+          node --check nes2.js
+          node --check snes.js
+          node --check n64.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
