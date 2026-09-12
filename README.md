@@ -1,20 +1,18 @@
-# Relic of Emberwood — True 3D Hero Demo
+# Relic of Emberwood — Four Classic Adventure Gameplay Styles
 
-This is a standalone proof-of-concept for replacing the current sprite-swapping hero with an actual articulated 3D character.
+Slot-2 is a comparison playground for four different action-adventure control and camera styles using original Relic of Emberwood visuals and names.
 
-## What is 3D here
-- Real 3D vertices and polygon faces
-- Hierarchical joints for shoulders, elbows, hips, knees, head, sword, and shield
-- Smooth 360-degree body rotation
-- Walk and run limb animation
-- Sword attack animation
-- Orbitable camera
-- Perspective projection and directional shading
+## Included styles
+- NES I — top-down room-based exploration and direct sword combat
+- NES II — side-scrolling platform/action-RPG movement
+- SNES — smoother 16-bit top-down movement, wider attack arcs, spin attack, and denser field interaction
+- N64 — perspective 3D movement, lock-on-style combat, sword attacks, and evasive movement
 
 ## Controls
-- Mobile: left joystick to move, RUN to run, ATTACK to swing the sword
-- Keyboard: WASD / arrow keys, Shift to run, Space to attack
-- Camera: tap CAMERA to switch to orbit mode, then drag the scene
-- AUTO TURN rotates the character automatically for inspection
+- Mobile: left joystick to move, A and B buttons for actions
+- Keyboard: WASD / arrow keys to move
+- Space / Enter: primary action
+- Shift / B: secondary action
+- Number keys 1–4: switch gameplay style
 
-The demo is self-contained and does not require Three.js or an external 3D library. It is intended to show the difference between real articulated 3D geometry and image/sprite swapping before adapting the approach to Slot-1.
+This project is a gameplay-style comparison only. It uses original Emberwood presentation rather than Nintendo graphics, maps, music, characters, or other game assets.
