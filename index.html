@@ -3,80 +3,104 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Relic of Emberwood — True 3D Hero Demo</title>
+<title>Relic of Emberwood — Four Classic Adventure Styles</title>
 <style>
-:root{color-scheme:dark}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111814;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#f4ecd9;touch-action:none}canvas{display:block;width:100%;height:100%;background:linear-gradient(#8ab9c4 0%,#bcd4c4 36%,#789869 37%,#496c42 100%)}
-#top{position:fixed;left:14px;right:14px;top:10px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;text-shadow:0 2px 5px #000}.brand{font-weight:900;letter-spacing:.7px;font-size:17px}.sub{font-size:11px;opacity:.85;margin-top:3px;max-width:520px}.badge{padding:7px 10px;border-radius:12px;background:#101711cc;border:1px solid #80906f80;font-size:11px;font-weight:800}
-#stick{position:fixed;left:22px;bottom:25px;width:132px;height:132px;border-radius:50%;border:2px solid #b3c3a855;background:radial-gradient(circle,#60765a88,#223128aa 68%);box-shadow:inset 0 0 30px #0008}.knob{position:absolute;width:56px;height:56px;left:36px;top:36px;border-radius:50%;background:radial-gradient(circle at 34% 28%,#cad4bf,#6d806a 55%,#39473a);box-shadow:0 5px 12px #0007,inset 0 -5px 8px #0005}
-#buttons{position:fixed;right:20px;bottom:26px;display:grid;grid-template-columns:68px 68px;gap:12px;align-items:end}.btn{width:68px;height:68px;border-radius:50%;border:2px solid #fff3;color:white;font-size:13px;font-weight:900;text-shadow:0 2px 3px #000;box-shadow:0 7px 15px #0008,inset 0 -7px 12px #0005;background:radial-gradient(circle at 35% 25%,#d46a55,#7a3026 72%)}#run{background:radial-gradient(circle at 35% 25%,#6c83d9,#34407f 72%)}
-#tools{position:fixed;right:16px;top:58px;display:flex;flex-direction:column;gap:7px}.small{background:#17231dcc;border:1px solid #95a68c66;color:#f5efdf;border-radius:9px;padding:8px 10px;font-weight:800;font-size:11px}
-#hint{position:fixed;left:50%;transform:translateX(-50%);bottom:8px;font-size:10px;opacity:.78;pointer-events:none;text-align:center}
-@media(max-width:520px){.sub{max-width:280px;font-size:9px}.brand{font-size:14px}#stick{width:116px;height:116px}.knob{left:29px;top:29px}.btn{width:61px;height:61px}#buttons{grid-template-columns:61px 61px}}
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#10140f;color:#f4ecd9;font-family:system-ui,-apple-system,Segoe UI,sans-serif;overflow:hidden;touch-action:none}
+body{display:flex;align-items:center;justify-content:center}
+#app{width:min(100vw,900px);height:100%;display:flex;flex-direction:column;background:#121a13}
+#top{display:flex;gap:8px;align-items:center;padding:8px;background:#0c110d;border-bottom:1px solid #344534;flex-wrap:wrap}
+#title{font-weight:900;margin-right:auto}
+.mode{border:1px solid #586b58;background:#1d2a20;color:#eee;border-radius:8px;padding:7px 9px;font-size:11px;font-weight:800}
+.mode.active{background:#6a7f4d;color:#fff}
+#stage{position:relative;flex:1;min-height:0;background:#000}
+canvas{width:100%;height:100%;display:block;background:#000;image-rendering:auto}
+#hud{position:absolute;left:10px;top:8px;padding:6px 8px;border-radius:8px;background:#0009;font-size:12px;font-weight:800;text-shadow:0 1px 2px #000;pointer-events:none}
+#desc{position:absolute;left:10px;right:10px;bottom:8px;padding:7px 9px;border-radius:8px;background:#000a;font-size:11px;pointer-events:none}
+#touch{height:154px;display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:#0d120e;border-top:1px solid #344534}
+#pad{width:126px;height:126px;border-radius:50%;border:2px solid #71816c;background:radial-gradient(circle,#40513f,#1c271e);position:relative}
+#knob{width:52px;height:52px;border-radius:50%;position:absolute;left:35px;top:35px;background:radial-gradient(circle at 35% 30%,#c6cfbd,#71806c 60%,#3b473b)}
+#actions{display:flex;gap:10px}
+.action{width:68px;height:68px;border-radius:50%;border:2px solid #ffffff33;color:#fff;font-weight:900;background:radial-gradient(circle at 35% 25%,#c7574b,#742922 72%);box-shadow:inset 0 -7px #0003}
+.action.b{background:radial-gradient(circle at 35% 25%,#5e70c6,#2f3974 72%)}
+#help{font-size:10px;opacity:.75;text-align:center;padding:3px 8px 6px;background:#0d120e}
+@media(max-width:600px){#title{font-size:13px;width:100%}.mode{font-size:10px;padding:6px 7px}#touch{height:138px}#pad{width:112px;height:112px}#knob{left:29px;top:29px}.action{width:60px;height:60px}}
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
-<div id="top"><div><div class="brand">RELIC OF EMBERWOOD — TRUE 3D HERO TEST</div><div class="sub">Procedural articulated 3D geometry with a stationary world camera: the hero physically moves across the scene with smooth 360° turning, articulated limbs, walk/run and attack animation.</div></div><div class="badge" id="readout">TRUE 3D · 0°</div></div>
-<div id="tools"><button class="small" id="cam">CAMERA: FIXED</button><button class="small" id="spin">AUTO TURN: OFF</button></div>
-<div id="stick"><div class="knob" id="knob"></div></div>
-<div id="buttons"><button class="btn" id="run">RUN</button><button class="btn" id="attack">ATTACK</button></div>
-<div id="hint">Move hero: joystick / WASD · Attack: A / Space · RUN button · Camera stays fixed · switch to ORBIT only to inspect model</div>
+<div id="app">
+  <div id="top">
+    <div id="title">RELIC OF EMBERWOOD — FOUR GAMEPLAY ERAS</div>
+    <button class="mode active" data-mode="0">NES I · TOP-DOWN</button>
+    <button class="mode" data-mode="1">NES II · SIDE VIEW</button>
+    <button class="mode" data-mode="2">SNES · 16-BIT TOP-DOWN</button>
+    <button class="mode" data-mode="3">N64 · 3D ACTION</button>
+  </div>
+  <div id="stage">
+    <canvas id="game"></canvas>
+    <div id="hud"></div>
+    <div id="desc"></div>
+  </div>
+  <div id="touch">
+    <div id="pad"><div id="knob"></div></div>
+    <div id="actions"><button class="action b" id="bBtn">B</button><button class="action" id="aBtn">A</button></div>
+  </div>
+  <div id="help">Keyboard: arrows/WASD move · Space/Enter = primary action · Shift/B = secondary action · 1–4 switch styles</div>
+</div>
 <script>
 'use strict';
-const canvas=document.getElementById('c'), ctx=canvas.getContext('2d');
-let W=0,H=0,DPR=Math.min(2,devicePixelRatio||1);
-function resize(){W=innerWidth;H=innerHeight;canvas.width=Math.floor(W*DPR);canvas.height=Math.floor(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0)}addEventListener('resize',resize);resize();
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),hud=document.getElementById('hud'),desc=document.getElementById('desc');
+let W=640,H=420,DPR=Math.min(2,devicePixelRatio||1);
+function resize(){const r=canvas.getBoundingClientRect();W=Math.max(320,r.width);H=Math.max(220,r.height);canvas.width=Math.floor(W*DPR);canvas.height=Math.floor(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0)}
+addEventListener('resize',resize);resize();
 
-const V=(x=0,y=0,z=0)=>({x,y,z});
-const add=(a,b)=>V(a.x+b.x,a.y+b.y,a.z+b.z), sub=(a,b)=>V(a.x-b.x,a.y-b.y,a.z-b.z), mul=(a,s)=>V(a.x*s,a.y*s,a.z*s);
-const dot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z, cross=(a,b)=>V(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x), len=a=>Math.hypot(a.x,a.y,a.z)||1, norm=a=>mul(a,1/len(a));
-function rotXYZ(p,r){let x=p.x,y=p.y,z=p.z,c=Math.cos(r.x),s=Math.sin(r.x);let y1=y*c-z*s,z1=y*s+z*c;y=y1;z=z1;c=Math.cos(r.y);s=Math.sin(r.y);let x1=x*c+z*s,z2=-x*s+z*c;x=x1;z=z2;c=Math.cos(r.z);s=Math.sin(r.z);x1=x*c-y*s;let y2=x*s+y*c;return V(x1,y2,z)}
-class Node{constructor(name='',pos=V(),rot=V()){this.name=name;this.pos=pos;this.rot=rot;this.children=[];this.parts=[];this.parent=null}add(n){n.parent=this;this.children.push(n);return n}part(mesh,color,offset=V(),rot=V(),scale=V(1,1,1),shine=.15){this.parts.push({mesh,color,offset,rot,scale,shine});return this}}
-function box(w,h,d){let v=[V(-w/2,-h/2,-d/2),V(w/2,-h/2,-d/2),V(w/2,h/2,-d/2),V(-w/2,h/2,-d/2),V(-w/2,-h/2,d/2),V(w/2,-h/2,d/2),V(w/2,h/2,d/2),V(-w/2,h/2,d/2)];let f=[[0,1,2,3],[4,7,6,5],[0,4,5,1],[3,2,6,7],[1,5,6,2],[0,3,7,4]];return{v,f}}
-function cylinder(r,h,n=8){let v=[],f=[];for(let i=0;i<n;i++){let a=i*Math.PI*2/n;v.push(V(Math.cos(a)*r,-h/2,Math.sin(a)*r),V(Math.cos(a)*r,h/2,Math.sin(a)*r))}for(let i=0;i<n;i++){let j=(i+1)%n;f.push([i*2,j*2,j*2+1,i*2+1])}f.push([...Array(n)].map((_,i)=>i*2).reverse());f.push([...Array(n)].map((_,i)=>i*2+1));return{v,f}}
-function sphere(r,lat=5,lon=8){let v=[],f=[];for(let y=0;y<=lat;y++){let ph=y*Math.PI/lat;for(let x=0;x<lon;x++){let th=x*Math.PI*2/lon;v.push(V(Math.sin(ph)*Math.cos(th)*r,Math.cos(ph)*r,Math.sin(ph)*Math.sin(th)*r))}}for(let y=0;y<lat;y++)for(let x=0;x<lon;x++){let nx=(x+1)%lon,a=y*lon+x,b=y*lon+nx,c=(y+1)*lon+nx,d=(y+1)*lon+x;f.push([a,b,c,d])}return{v,f}}
-function cone(r,h,n=8){let v=[V(0,h/2,0)],f=[];for(let i=0;i<n;i++){let a=i*Math.PI*2/n;v.push(V(Math.cos(a)*r,-h/2,Math.sin(a)*r))}for(let i=0;i<n;i++)f.push([0,1+i,1+(i+1)%n]);f.push([...Array(n)].map((_,i)=>i+1).reverse());return{v,f}}
-function prism(points,depth=.12){let v=[],f=[],n=points.length;for(let z of [-depth/2,depth/2])for(let p of points)v.push(V(p[0],p[1],z));f.push([...Array(n)].map((_,i)=>i));f.push([...Array(n)].map((_,i)=>n+i).reverse());for(let i=0;i<n;i++)f.push([i,(i+1)%n,n+(i+1)%n,n+i]);return{v,f}}
-const meshes={head:sphere(.28,5,8),torso:box(.52,.72,.30),pelvis:box(.43,.23,.26),upper:cylinder(.105,.55,7),fore:cylinder(.09,.48,7),hand:sphere(.11,4,6),thigh:cylinder(.12,.62,7),calf:cylinder(.105,.58,7),boot:box(.22,.22,.38),ear:prism([[0,.12],[.25,0],[0,-.12]],.08),sword:box(.075,.86,.055),guard:box(.42,.065,.09),shield:cylinder(.33,.09,12),hood:cone(.32,.52,9),belt:box(.55,.09,.33)};
-function hexToRgb(h){h=h.replace('#','');if(h.length===3)h=[...h].map(x=>x+x).join('');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]}
-function shade(hex,k){let [r,g,b]=hexToRgb(hex);r=Math.max(0,Math.min(255,r*k));g=Math.max(0,Math.min(255,g*k));b=Math.max(0,Math.min(255,b*k));return`rgb(${r|0},${g|0},${b|0})`}
+const keys=new Set(),touch={x:0,y:0,a:false,b:false},modes=[initNes1,initNes2,initSnes,initN64];
+let mode=0,state=modes[0](),last=performance.now();
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),dist=(a,b,c,d)=>Math.hypot(a-c,b-d);
+function dirInput(){let x=touch.x,y=touch.y;x+=(keys.has('ArrowRight')||keys.has('KeyD'))?1:0;x-=(keys.has('ArrowLeft')||keys.has('KeyA'))?1:0;y+=(keys.has('ArrowDown')||keys.has('KeyS'))?1:0;y-=(keys.has('ArrowUp')||keys.has('KeyW'))?1:0;let m=Math.hypot(x,y);if(m>1){x/=m;y/=m}return{x,y}}
+function pressedA(){return touch.a||keys.has('Space')||keys.has('Enter')}
+function pressedB(){return touch.b||keys.has('ShiftLeft')||keys.has('KeyB')}
 
-const hero=new Node('root',V(0,0,0),V());
-const pelvis=hero.add(new Node('pelvis',V(0,1.02,0))).part(meshes.pelvis,'#476b37').part(meshes.belt,'#6b472d',V(0,.06,0));
-const torso=pelvis.add(new Node('torso',V(0,.48,0))).part(meshes.torso,'#4f7d3f');
-torso.part(box(.10,.78,.34),'#6b472d',V(.07,0,.01),V(0,0,-.38));
-const neck=torso.add(new Node('neck',V(0,.53,0)));
-const head=neck.add(new Node('head',V(0,.25,0))).part(meshes.head,'#e8b98e');
-head.part(meshes.ear,'#e8b98e',V(-.28,0,0),V(0,Math.PI,0),V(1,1,1)).part(meshes.ear,'#e8b98e',V(.28,0,0));
-head.part(meshes.hood,'#416d3e',V(0,.14,.03),V(0,0,.08),V(1,1.1,1));
-head.part(cone(.16,.35,7),'#c79655',V(0,.21,-.06),V(.7,0,0));
-function arm(side){let s=side==='L'?-1:1;let sh=torso.add(new Node('shoulder'+side,V(s*.37,.28,0),V(0,0,s*.04)));sh.part(meshes.upper,'#d3d7cb',V(0,-.27,0));let el=sh.add(new Node('elbow'+side,V(0,-.55,0)));el.part(meshes.fore,'#845d3a',V(0,-.23,0));let ha=el.add(new Node('hand'+side,V(0,-.49,0)));ha.part(meshes.hand,'#d9a77e');return{sh,el,ha}}
-const LA=arm('L'),RA=arm('R');
-function leg(side){let s=side==='L'?-1:1;let hip=pelvis.add(new Node('hip'+side,V(s*.14,-.13,0)));hip.part(meshes.thigh,'#d0cbb8',V(0,-.31,0));let knee=hip.add(new Node('knee'+side,V(0,-.62,0)));knee.part(meshes.calf,'#6b4b30',V(0,-.29,0));let foot=knee.add(new Node('foot'+side,V(0,-.60,.08)));foot.part(meshes.boot,'#5a3c28',V(0,-.03,.08));return{hip,knee,foot}}
-const LL=leg('L'),RL=leg('R');
-const swordNode=RA.ha.add(new Node('sword',V(0,-.12,0),V(0,0,0)));swordNode.part(meshes.sword,'#cbd2d5',V(0,-.45,0),V(),V(1,1,1),.8).part(meshes.guard,'#c6a351',V(0,-.03,0));
-const shieldNode=LA.el.add(new Node('shield',V(-.17,-.23,.05),V(Math.PI/2,0,0)));shieldNode.part(meshes.shield,'#805532').part(cylinder(.22,.105,12),'#4f7b40',V(0,.006,0));
+function switchMode(n){mode=n;state=modes[n]();document.querySelectorAll('.mode').forEach((b,i)=>b.classList.toggle('active',i===n))}
+document.querySelectorAll('.mode').forEach((b,i)=>b.onclick=()=>switchMode(i));
+addEventListener('keydown',e=>{keys.add(e.code);if(['Digit1','Digit2','Digit3','Digit4'].includes(e.code))switchMode(+e.code.slice(-1)-1);if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault()});
+addEventListener('keyup',e=>keys.delete(e.code));
 
-const sceneRoot=new Node('scene');
-function tree(x,z,s=1){let n=sceneRoot.add(new Node('tree',V(x,0,z)));n.part(cylinder(.13*s,.9*s,7),'#6c4a2e',V(0,.45*s,0));n.part(cone(.65*s,1.2*s,9),'#315f35',V(0,1.25*s,0));n.part(cone(.48*s,.95*s,9),'#3d7440',V(0,1.75*s,0));return n}
-function rock(x,z,s=1){sceneRoot.add(new Node('rock',V(x,.18*s,z))).part(sphere(.35*s,3,7),'#6f746c',V(),V(),V(1.25,.7,1));}
-tree(-2.8,-2.5,1.05);tree(3.2,-3.5,.9);tree(-3.8,2.6,.75);rock(2.6,2.4,1.1);rock(-2.0,1.8,.7);
+const pad=document.getElementById('pad'),knob=document.getElementById('knob');let pid=null;
+function joy(e){let r=pad.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,R=r.width*.34,m=Math.hypot(dx,dy);if(m>R){dx*=R/m;dy*=R/m}touch.x=dx/R;touch.y=dy/R;knob.style.transform=`translate(${dx}px,${dy}px)`}
+pad.addEventListener('pointerdown',e=>{pid=e.pointerId;pad.setPointerCapture(pid);joy(e)});
+pad.addEventListener('pointermove',e=>{if(e.pointerId===pid)joy(e)});
+function endJoy(e){if(e.pointerId!==pid)return;pid=null;touch.x=touch.y=0;knob.style.transform=''}
+pad.addEventListener('pointerup',endJoy);pad.addEventListener('pointercancel',endJoy);
+for(const [id,key] of [['aBtn','a'],['bBtn','b']]){const el=document.getElementById(id);el.addEventListener('pointerdown',e=>{touch[key]=true;el.setPointerCapture(e.pointerId)});el.addEventListener('pointerup',()=>touch[key]=false);el.addEventListener('pointercancel',()=>touch[key]=false)}
 
-let camMode=0,camYaw=.65,camPitch=.50,camDist=7.1,autoTurn=false;
-let player={x:0,z:0,yaw:0,targetYaw:0,speed:0,phase:0,run:false,attack:0};
-let input={x:0,y:0};
-function camera(){let target=camMode===0?V(0,1.05,0):V(player.x,1.15,player.z),yaw=camYaw,pitch=camPitch,dist=camDist;let cp=Math.cos(pitch),sp=Math.sin(pitch);let pos=V(target.x+Math.sin(yaw)*cp*dist,target.y+sp*dist,target.z+Math.cos(yaw)*cp*dist);return{pos,target}}
-function worldTransformPoint(p,node){let chain=[];for(let n=node;n;n=n.parent)chain.push(n);let q=V(p.x,p.y,p.z);for(let i=0;i<chain.length;i++){let n=chain[i];q=add(rotXYZ(q,n.rot),n.pos)}return q}
-function collectNode(node,out){for(let part of node.parts){let vv=part.mesh.v.map(p=>{let q=V(p.x*part.scale.x,p.y*part.scale.y,p.z*part.scale.z);q=rotXYZ(q,part.rot);q=add(q,part.offset);return worldTransformPoint(q,node)});for(let fi=0;fi<part.mesh.f.length;fi++){let face=part.mesh.f[fi],pts=face.map(i=>vv[i]);if(pts.length>=3){let normal=norm(cross(sub(pts[1],pts[0]),sub(pts[2],pts[0])));out.push({pts,normal,color:part.color,shine:part.shine})}}}for(let c of node.children)collectNode(c,out)}
-function projectWorld(p,cam){let f=norm(sub(cam.target,cam.pos)),right=norm(cross(f,V(0,1,0))),up=cross(right,f),q=sub(p,cam.pos);let X=dot(q,right),Y=dot(q,up),Z=dot(q,f);if(Z<.08)return null;let focal=Math.min(W,H)*.92;return{x:W/2+X/Z*focal,y:H*.46-Y/Z*focal,z:Z}}
-function render(){ctx.clearRect(0,0,W,H);let c=camera();let sky=ctx.createLinearGradient(0,0,0,H*.58);sky.addColorStop(0,'#7aaab4');sky.addColorStop(1,'#c8d8c7');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H*.58);let grd=ctx.createLinearGradient(0,H*.48,0,H);grd.addColorStop(0,'#7f9f6a');grd.addColorStop(1,'#3d633b');ctx.fillStyle=grd;ctx.fillRect(0,H*.48,W,H*.52);ctx.save();ctx.globalAlpha=.15;ctx.strokeStyle='#203424';ctx.lineWidth=1;for(let i=-8;i<=8;i++){let a=projectWorld(V(i*.7,0,-6),c),b=projectWorld(V(i*.7,0,6),c);if(a&&b){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}a=projectWorld(V(-6,0,i*.7),c);b=projectWorld(V(6,0,i*.7),c);if(a&&b){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}ctx.restore();let faces=[];collectNode(sceneRoot,faces);collectNode(hero,faces);let projected=[],light=norm(V(-.5,.9,.35));for(let f of faces){let ps=f.pts.map(p=>projectWorld(p,c));if(ps.some(p=>!p))continue;let depth=ps.reduce((s,p)=>s+p.z,0)/ps.length;let lit=.54+Math.max(0,dot(f.normal,light))*.55;projected.push({ps,depth,color:shade(f.color,lit)})}projected.sort((a,b)=>b.depth-a.depth);for(let f of projected){ctx.beginPath();ctx.moveTo(f.ps[0].x,f.ps[0].y);for(let i=1;i<f.ps.length;i++)ctx.lineTo(f.ps[i].x,f.ps[i].y);ctx.closePath();ctx.fillStyle=f.color;ctx.fill();ctx.strokeStyle='rgba(20,25,20,.18)';ctx.lineWidth=.55;ctx.stroke()}}
-function shortest(a,b){let d=(b-a+Math.PI)%(Math.PI*2)-Math.PI;return d<-Math.PI?d+Math.PI*2:d}
-function animate(dt){let mx=input.x,my=input.y;let keysX=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0);let keysY=(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0);if(Math.hypot(keysX,keysY)>.1){mx=keysX;my=keysY}let mag=Math.min(1,Math.hypot(mx,my));if(autoTurn&&!mag){player.targetYaw+=dt*.75;player.speed=0}else if(mag>.08){player.targetYaw=Math.atan2(mx,my);player.speed=(player.run?2.6:1.55)*mag;player.x+=Math.sin(player.targetYaw)*player.speed*dt;player.z+=Math.cos(player.targetYaw)*player.speed*dt;player.x=Math.max(-4.6,Math.min(4.6,player.x));player.z=Math.max(-4.6,Math.min(4.6,player.z));player.phase+=dt*player.speed*(player.run?6.3:5)}else player.speed=0;player.yaw+=shortest(player.yaw,player.targetYaw)*Math.min(1,dt*10);hero.pos.x=player.x;hero.pos.z=player.z;hero.rot.y=player.yaw;let moving=player.speed>0.05,sw=moving?Math.sin(player.phase):0,sw2=moving?Math.sin(player.phase+Math.PI):0,runAmp=player.run?.85:.55;pelvis.pos.y=1.02+(moving?Math.abs(Math.sin(player.phase))*0.035:Math.sin(performance.now()/600)*.008);torso.rot.z=moving?sw*.025:0;torso.rot.y=moving?sw*.035:0;LL.hip.rot.x=sw*runAmp;RL.hip.rot.x=sw2*runAmp;LL.knee.rot.x=Math.max(0,-sw)*(.65+(player.run?.25:0));RL.knee.rot.x=Math.max(0,-sw2)*(.65+(player.run?.25:0));LA.sh.rot.x=sw2*(player.run?.70:.46);RA.sh.rot.x=sw*(player.run?.70:.46);LA.el.rot.x=-.18+Math.max(0,sw)*.32;RA.el.rot.x=-.18+Math.max(0,sw2)*.32;head.rot.y=moving?Math.sin(player.phase*.5)*.035:Math.sin(performance.now()/1200)*.025;if(player.attack>0){player.attack=Math.max(0,player.attack-dt);let t=1-player.attack/.48;let arc=Math.sin(Math.min(1,t)*Math.PI);RA.sh.rot.z=-.35-arc*1.65;RA.sh.rot.x=-.5+Math.cos(t*Math.PI)*.25;RA.el.rot.z=-.3-arc*.55;swordNode.rot.x=-.35}else{swordNode.rot.x=0;RA.sh.rot.z=0;RA.el.rot.z=0}document.getElementById('readout').textContent=`TRUE 3D · ${(player.yaw*180/Math.PI+360)%360|0}° · ${player.run?'RUN':'WALK'}`}
-let last=performance.now();function loop(now){let dt=Math.min(.033,(now-last)/1000);last=now;animate(dt);render();requestAnimationFrame(loop)}requestAnimationFrame(loop);
-const keys=new Set();addEventListener('keydown',e=>{keys.add(e.code);if(e.code==='Space'||e.code==='Enter'){player.attack=.48;e.preventDefault()}if(e.code==='ShiftLeft'||e.code==='ShiftRight')player.run=true});addEventListener('keyup',e=>{keys.delete(e.code);if(e.code.startsWith('Shift'))player.run=false});
-const stick=document.getElementById('stick'),knob=document.getElementById('knob');let stickId=null;function joy(e){let r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,R=r.width*.34,m=Math.hypot(dx,dy);if(m>R){dx*=R/m;dy*=R/m}input.x=dx/R;input.y=dy/R;knob.style.transform=`translate(${dx}px,${dy}px)`}stick.addEventListener('pointerdown',e=>{stickId=e.pointerId;stick.setPointerCapture(e.pointerId);joy(e)});stick.addEventListener('pointermove',e=>{if(e.pointerId===stickId)joy(e)});function endJoy(e){if(e.pointerId!==stickId)return;stickId=null;input.x=input.y=0;knob.style.transform=''}stick.addEventListener('pointerup',endJoy);stick.addEventListener('pointercancel',endJoy);
-const atk=document.getElementById('attack');atk.addEventListener('pointerdown',e=>{player.attack=.48;e.preventDefault()});const run=document.getElementById('run');run.addEventListener('pointerdown',e=>{player.run=true;run.setPointerCapture(e.pointerId)});run.addEventListener('pointerup',()=>player.run=false);run.addEventListener('pointercancel',()=>player.run=false);
-let drag=false,px=0,py=0;canvas.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;canvas.setPointerCapture(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(!drag||camMode===0)return;let dx=e.clientX-px,dy=e.clientY-py;px=e.clientX;py=e.clientY;camYaw-=dx*.008;camPitch=Math.max(.12,Math.min(1.15,camPitch+dy*.006))});canvas.addEventListener('pointerup',()=>drag=false);canvas.addEventListener('wheel',e=>{camDist=Math.max(3.2,Math.min(10,camDist+e.deltaY*.006));e.preventDefault()},{passive:false});
-document.getElementById('cam').onclick=()=>{camMode=1-camMode;document.getElementById('cam').textContent='CAMERA: '+(camMode?'ORBIT':'FIXED')};document.getElementById('spin').onclick=()=>{autoTurn=!autoTurn;document.getElementById('spin').textContent='AUTO TURN: '+(autoTurn?'ON':'OFF')};
+function pixelRect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))}
+function drawHero8(x,y,dir,scale=1,c='#d8e3b2'){ctx.save();ctx.translate(x,y);pixelRect(-4*scale,-6*scale,8*scale,8*scale,'#4e7b3b');pixelRect(-3*scale,-10*scale,6*scale,5*scale,'#e6b987');pixelRect(-4*scale,2*scale,3*scale,5*scale,'#6a472d');pixelRect(1*scale,2*scale,3*scale,5*scale,'#6a472d');ctx.strokeStyle=c;ctx.lineWidth=2*scale;ctx.beginPath();if(dir===0){ctx.moveTo(3*scale,-2*scale);ctx.lineTo(10*scale,-2*scale)}if(dir===1){ctx.moveTo(0,1*scale);ctx.lineTo(0,9*scale)}if(dir===2){ctx.moveTo(-3*scale,-2*scale);ctx.lineTo(-10*scale,-2*scale)}if(dir===3){ctx.moveTo(0,-7*scale);ctx.lineTo(0,-15*scale)}ctx.stroke();ctx.restore()}
+function tree2d(x,y,s=1){ctx.fillStyle='#244b2a';ctx.beginPath();ctx.arc(x,y,15*s,0,Math.PI*2);ctx.fill();ctx.fillStyle='#3b733a';ctx.beginPath();ctx.arc(x-5*s,y-6*s,11*s,0,Math.PI*2);ctx.fill();ctx.fillStyle='#6b4d31';ctx.fillRect(x-3*s,y+10*s,6*s,12*s)}
+function enemyBlob(e,c='#9b4c3e'){ctx.fillStyle=c;ctx.beginPath();ctx.arc(e.x,e.y,e.r||10,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(e.x-5,e.y-3,3,3);ctx.fillRect(e.x+2,e.y-3,3,3)}
+
+function initNes1(){return{p:{x:W*.5,y:H*.62,dir:3,hp:6},en:[{x:120,y:120,vx:42,vy:0,r:10},{x:W-130,y:170,vx:0,vy:36,r:10}],attack:0,aLatch:false,trees:[[80,80],[W-75,90],[90,H-80],[W-95,H-72]]}}
+function updateNes1(dt,s){let i=dirInput(),p=s.p,sp=110;if(Math.abs(i.x)>Math.abs(i.y)){p.x+=i.x*sp*dt;p.dir=i.x>0?0:2}else if(Math.abs(i.y)>.05){p.y+=i.y*sp*dt;p.dir=i.y>0?1:3}p.x=clamp(p.x,25,W-25);p.y=clamp(p.y,40,H-35);let a=pressedA();if(a&&!s.aLatch)s.attack=.16;s.aLatch=a;s.attack=Math.max(0,s.attack-dt);for(const e of s.en){e.x+=e.vx*dt;e.y+=e.vy*dt;if(e.x<35||e.x>W-35)e.vx*=-1;if(e.y<55||e.y>H-45)e.vy*=-1}hud.textContent='8-BIT TOP-DOWN · ♥ '+p.hp;desc.textContent='Room-by-room overhead exploration, 4-direction movement, direct sword combat, simple enemies and screen-edge progression.'}
+function renderNes1(s){ctx.fillStyle='#7ea057';ctx.fillRect(0,0,W,H);ctx.fillStyle='#597d43';ctx.fillRect(18,25,W-36,H-50);for(const t of s.trees)tree2d(t[0],t[1],.8);for(const e of s.en)enemyBlob(e,'#b14f3e');drawHero8(s.p.x,s.p.y,s.p.dir,1.15);if(s.attack>0){ctx.strokeStyle='#fff6be';ctx.lineWidth=4;ctx.beginPath();let p=s.p,d=[[16,0],[0,16],[-16,0],[0,-16]][p.dir];ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+d[0],p.y+d[1]);ctx.stroke()}}
+
+function initNes2(){return{p:{x:80,y:H-80,vx:0,vy:0,on:true,hp:6,face:1},enemy:{x:W-120,y:H-78,dir:-1},attack:0,aLatch:false,bLatch:false}}
+function updateNes2(dt,s){let i=dirInput(),p=s.p;p.vx=i.x*145;p.x+=p.vx*dt;p.face=p.vx<-.1?-1:p.vx>.1?1:p.face;p.vy+=520*dt;let a=pressedA();if(a&&!s.aLatch&&p.on){p.vy=-255;p.on=false}s.aLatch=a;let b=pressedB();if(b&&!s.bLatch)s.attack=.18;s.bLatch=b;s.attack=Math.max(0,s.attack-dt);p.y+=p.vy*dt;let floor=H-62;if(p.y>floor){p.y=floor;p.vy=0;p.on=true}p.x=clamp(p.x,22,W-22);s.enemy.x+=s.enemy.dir*48*dt;if(s.enemy.x<W*.55||s.enemy.x>W-45)s.enemy.dir*=-1;hud.textContent='8-BIT SIDE VIEW · ♥ '+p.hp;desc.textContent='Side-scrolling action-RPG style: platform movement, jumping, sword reach, elevation changes, and side-view enemy encounters.'}
+function renderNes2(s){ctx.fillStyle='#7fb0c4';ctx.fillRect(0,0,W,H);ctx.fillStyle='#364b75';ctx.fillRect(0,H*.28,W,H*.35);ctx.fillStyle='#72523a';ctx.fillRect(0,H-52,W,52);ctx.fillStyle='#98734c';for(let x=0;x<W;x+=32)ctx.fillRect(x,H-56,28,8);ctx.fillStyle='#4d813e';ctx.fillRect(W*.28,H-120,120,16);ctx.fillRect(W*.66,H-170,110,16);let p=s.p;ctx.fillStyle='#4d7f3d';ctx.fillRect(p.x-8,p.y-25,16,24);ctx.fillStyle='#e2b486';ctx.fillRect(p.x-6,p.y-35,12,11);ctx.fillStyle='#6b482e';ctx.fillRect(p.x-8,p.y-2,7,10);ctx.fillRect(p.x+1,p.y-2,7,10);ctx.fillStyle='#a34c42';ctx.fillRect(s.enemy.x-10,H-82,20,20);if(s.attack>0){ctx.strokeStyle='#f8eebc';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(p.x,p.y-20);ctx.lineTo(p.x+p.face*28,p.y-20);ctx.stroke()}}
+
+function initSnes(){return{p:{x:W*.48,y:H*.58,dir:1,hp:8},en:[{x:W*.25,y:H*.35,vx:35,vy:22,r:12},{x:W*.72,y:H*.42,vx:-28,vy:18,r:12}],attack:0,spin:0,aLatch:false,bLatch:false,pots:[[150,H-110],[W-160,H-125]],grass:Array.from({length:18},(_,i)=>[60+(i%9)*55,70+Math.floor(i/9)*250])}}
+function updateSnes(dt,s){let i=dirInput(),p=s.p,sp=150;p.x+=i.x*sp*dt;p.y+=i.y*sp*dt;if(Math.hypot(i.x,i.y)>.1){let a=Math.atan2(i.y,i.x);p.dir=((Math.round(a/(Math.PI/2))%4)+4)%4}p.x=clamp(p.x,20,W-20);p.y=clamp(p.y,38,H-30);let a=pressedA();if(a&&!s.aLatch)s.attack=.20;s.aLatch=a;let b=pressedB();if(b&&!s.bLatch)s.spin=.55;s.bLatch=b;s.attack=Math.max(0,s.attack-dt);s.spin=Math.max(0,s.spin-dt);for(const e of s.en){e.x+=e.vx*dt;e.y+=e.vy*dt;if(e.x<25||e.x>W-25)e.vx*=-1;if(e.y<45||e.y>H-35)e.vy*=-1}hud.textContent='16-BIT TOP-DOWN · ♥ '+p.hp;desc.textContent='Smoother diagonal movement, denser scenery, wider attack arcs, spin attack, destructible/interactable field objects, and more expressive 16-bit pacing.'}
+function renderSnes(s){let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#91b762');g.addColorStop(1,'#5c8d4e');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.fillStyle='#b7a66a';ctx.fillRect(W*.43,0,W*.14,H);ctx.fillStyle='#43876f';ctx.fillRect(0,H*.45,W*.22,H*.16);for(const q of s.grass){ctx.strokeStyle='#2e6d34';ctx.lineWidth=2;for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(q[0]+k*3,q[1]+8);ctx.lineTo(q[0]-2+k*3,q[1]);ctx.stroke()}}for(const p of s.pots){ctx.fillStyle='#9b7044';ctx.beginPath();ctx.ellipse(p[0],p[1],10,12,0,0,Math.PI*2);ctx.fill()}for(const e of s.en)enemyBlob(e,'#804da0');drawHero8(s.p.x,s.p.y,s.p.dir,1.4,'#fff');if(s.attack>0||s.spin>0){ctx.strokeStyle='#fff3bd';ctx.lineWidth=4;ctx.beginPath();ctx.arc(s.p.x,s.p.y,24,s.spin>0?0:-.8,s.spin>0?Math.PI*2:.8);ctx.stroke()}}
+
+function initN64(){return{p:{x:0,z:1.8,yaw:Math.PI,hp:8},enemy:{x:0,z:-2.2,hp:5},cam:{yaw:0,pitch:.35,dist:6.5},attack:0,roll:0,aLatch:false,bLatch:false,lock:true}}
+function proj3(x,y,z,s){let p=s.p,c=s.cam;let tx=x-p.x,tz=z-p.z,cy=Math.cos(c.yaw),sy=Math.sin(c.yaw),rx=tx*cy-tz*sy,rz=tx*sy+tz*cy+c.dist,py=y;let cp=Math.cos(c.pitch),sp=Math.sin(c.pitch),yy=py*cp-rz*sp,zz=py*sp+rz*cp;if(zz<.3)return null;let f=Math.min(W,H)*1.08;return{x:W/2+rx/zz*f,y:H*.54-yy/zz*f,z:zz}}
+function updateN64(dt,s){let i=dirInput(),p=s.p;let mag=Math.hypot(i.x,i.y);if(mag>.08){let ang=Math.atan2(i.x,i.y)+s.cam.yaw;p.yaw=ang;let sp=s.roll>0?3.8:2.0;p.x+=Math.sin(ang)*sp*dt*mag;p.z+=Math.cos(ang)*sp*dt*mag}p.x=clamp(p.x,-3.2,3.2);p.z=clamp(p.z,-3.2,3.2);let a=pressedA();if(a&&!s.aLatch)s.attack=.28;s.aLatch=a;let b=pressedB();if(b&&!s.bLatch)s.roll=.42;s.bLatch=b;s.attack=Math.max(0,s.attack-dt);s.roll=Math.max(0,s.roll-dt);if(s.lock){let dx=s.enemy.x-p.x,dz=s.enemy.z-p.z;if(Math.hypot(dx,dz)<4.5)p.yaw=Math.atan2(dx,dz)}hud.textContent='3D ACTION-ADVENTURE · ♥ '+p.hp+' · LOCK-ON '+(s.lock?'ON':'OFF');desc.textContent='N64-style 3D action: free movement on a 3D plane, camera perspective, target lock-on behavior, sword attacks and evasive roll-style movement.'}
+function draw3Box(x,y,z,w,h,d,c,s){let pts=[];for(const dx of [-w/2,w/2])for(const dy of [0,h])for(const dz of [-d/2,d/2])pts.push(proj3(x+dx,y+dy,z+dz,s));if(pts.some(p=>!p))return;let minx=Math.min(...pts.map(p=>p.x)),maxx=Math.max(...pts.map(p=>p.x)),miny=Math.min(...pts.map(p=>p.y)),maxy=Math.max(...pts.map(p=>p.y));ctx.fillStyle=c;ctx.fillRect(minx,miny,maxx-minx,maxy-miny);ctx.strokeStyle='#0005';ctx.strokeRect(minx,miny,maxx-minx,maxy-miny)}
+function renderN64(s){let sky=ctx.createLinearGradient(0,0,0,H*.58);sky.addColorStop(0,'#7ca9c8');sky.addColorStop(1,'#cad8bf');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);ctx.fillStyle='#4f7e46';ctx.fillRect(0,H*.48,W,H*.52);ctx.strokeStyle='#2f5030';ctx.lineWidth=1;for(let k=-5;k<=5;k++){let a=proj3(k,0,-4,s),b=proj3(k,0,4,s);if(a&&b){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}a=proj3(-4,0,k,s);b=proj3(4,0,k,s);if(a&&b){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}for(const [x,z] of [[-2.8,-2.4],[2.7,-2.6],[-2.9,2.5],[2.8,2.2]]){draw3Box(x,0,z,.35,1.15,.35,'#6b4d31',s);let q=proj3(x,1.45,z,s);if(q){ctx.fillStyle='#2f6538';ctx.beginPath();ctx.arc(q.x,q.y,30/q.z*2.5,0,Math.PI*2);ctx.fill()}}draw3Box(s.enemy.x,0,s.enemy.z,.65,.7,.65,'#934c43',s);let ep=proj3(s.enemy.x,.85,s.enemy.z,s);if(ep&&s.lock){ctx.strokeStyle='#ffd66c';ctx.lineWidth=2;ctx.beginPath();ctx.arc(ep.x,ep.y,16,0,Math.PI*2);ctx.stroke()}let p=s.p;let hp=proj3(p.x,.65,p.z,s);if(hp){ctx.save();ctx.translate(hp.x,hp.y);ctx.rotate(-p.yaw+s.cam.yaw);ctx.fillStyle='#4d7b3b';ctx.fillRect(-10,-28,20,30);ctx.fillStyle='#e2b486';ctx.beginPath();ctx.arc(0,-36,9,0,Math.PI*2);ctx.fill();ctx.fillStyle='#6b482f';ctx.fillRect(-9,1,7,15);ctx.fillRect(2,1,7,15);ctx.strokeStyle='#f6efc5';ctx.lineWidth=4;ctx.beginPath();let swing=s.attack>0?Math.sin((.28-s.attack)/.28*Math.PI)*1.2:0;ctx.moveTo(8,-16);ctx.lineTo(23+Math.cos(swing)*10,-22-Math.sin(swing)*16);ctx.stroke();ctx.restore()}}
+
+function update(dt){if(mode===0)updateNes1(dt,state);else if(mode===1)updateNes2(dt,state);else if(mode===2)updateSnes(dt,state);else updateN64(dt,state)}
+function render(){ctx.clearRect(0,0,W,H);if(mode===0)renderNes1(state);else if(mode===1)renderNes2(state);else if(mode===2)renderSnes(state);else renderN64(state)}
+function loop(now){let dt=Math.min(.033,(now-last)/1000);last=now;update(dt);render();requestAnimationFrame(loop)}requestAnimationFrame(loop);
 </script>
-</body></html>
+</body>
+</html>
