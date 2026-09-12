@@ -1,0 +1,41 @@
+name: Repair 3D Hero Demo Fixed Camera
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-fixed-camera.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Restore known-good demo and lock camera
+        shell: bash
+        run: |
+          git show d3e227a381a16007720f90681246254872d9be7a:index.html > index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          s=s.replace('<div id="tools"><button class="small" id="cam">CAMERA: GAME</button><button class="small" id="spin">AUTO TURN: OFF</button></div>', '<div id="tools"><button class="small" id="cam">CAMERA: FIXED</button><button class="small" id="spin">AUTO TURN: OFF</button></div>')
+          s=s.replace('<div id="hint">Move: joystick / WASD · Attack: A / Space · Drag scene: orbit camera · Mouse wheel: zoom</div>', '<div id="hint">Move hero: joystick / WASD · Attack: A / Space · RUN button · Camera stays fixed · switch to ORBIT only to inspect model</div>')
+          s=s.replace('Procedural articulated 3D geometry: smooth 360° turning, shoulders, elbows, hips, knees, sword arm, shield arm, walk/run and attack animation.', 'Procedural articulated 3D geometry with a stationary world camera: the hero physically moves across the scene with smooth 360° turning, articulated limbs, walk/run and attack animation.')
+          s=s.replace('let camMode=0,camYaw=.65,camPitch=.40,camDist=6.2,autoTurn=false;', 'let camMode=0,camYaw=.65,camPitch=.50,camDist=7.1,autoTurn=false;')
+          s=s.replace("function camera(){let target=V(player.x,1.15,player.z),yaw=camYaw,pitch=camPitch,dist=camDist;if(camMode===0){yaw=player.yaw+.62;pitch=.50;dist=5.2}let cp=Math.cos(pitch),sp=Math.sin(pitch);let pos=V(target.x+Math.sin(yaw)*cp*dist,target.y+sp*dist,target.z+Math.cos(yaw)*cp*dist);return{pos,target}}", "function camera(){let target=camMode===0?V(0,1.05,0):V(player.x,1.15,player.z),yaw=camYaw,pitch=camPitch,dist=camDist;let cp=Math.cos(pitch),sp=Math.sin(pitch);let pos=V(target.x+Math.sin(yaw)*cp*dist,target.y+sp*dist,target.z+Math.cos(yaw)*cp*dist);return{pos,target}}")
+          s=s.replace("player.x+=Math.sin(player.targetYaw)*player.speed*dt;player.z+=Math.cos(player.targetYaw)*player.speed*dt;player.phase+=dt*player.speed*(player.run?6.3:5)", "player.x+=Math.sin(player.targetYaw)*player.speed*dt;player.z+=Math.cos(player.targetYaw)*player.speed*dt;player.x=Math.max(-4.6,Math.min(4.6,player.x));player.z=Math.max(-4.6,Math.min(4.6,player.z));player.phase+=dt*player.speed*(player.run?6.3:5)")
+          s=s.replace("document.getElementById('cam').onclick=()=>{camMode=1-camMode;document.getElementById('cam').textContent='CAMERA: '+(camMode?'ORBIT':'GAME')};", "document.getElementById('cam').onclick=()=>{camMode=1-camMode;document.getElementById('cam').textContent='CAMERA: '+(camMode?'ORBIT':'FIXED')};")
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Make world stationary and move 3D hero through scene'
+          git push
