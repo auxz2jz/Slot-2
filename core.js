@@ -3,8 +3,8 @@
 const canvas=document.getElementById('game2d'),ctx=canvas.getContext('2d',{alpha:false});
 const threeHost=document.getElementById('threeHost'),hud=document.getElementById('hud'),caption=document.getElementById('caption');
 const stage=document.getElementById('stage');
-const keys=new Set(), touch={x:0,y:0,a:false,b:false}, edge={a:false,b:false};
-let prevA=false,prevB=false, modeIndex=0,current=null,last=performance.now(),CW=640,CH=400,DPR=Math.min(2,devicePixelRatio||1);
+const keys=new Set(), touch={x:0,y:0,a:false,b:false,z:false}, edge={a:false,b:false,z:false};
+let prevA=false,prevB=false,prevZ=false, modeIndex=0,current=null,last=performance.now(),CW=640,CH=400,DPR=Math.min(2,devicePixelRatio||1);
 const modes=[];
 function resize(){
   const r=stage.getBoundingClientRect(); CW=Math.max(320,r.width); CH=Math.max(220,r.height);
@@ -22,10 +22,16 @@ const input={
  },
  a(){return touch.a||keys.has('Space')||keys.has('Enter')},
  b(){return touch.b||keys.has('ShiftLeft')||keys.has('ShiftRight')||keys.has('KeyB')},
+ z(){return touch.z||keys.has('KeyZ')},
  pressA(){if(edge.a){edge.a=false;return true}return false},
- pressB(){if(edge.b){edge.b=false;return true}return false}
+ pressB(){if(edge.b){edge.b=false;return true}return false},
+ pressZ(){if(edge.z){edge.z=false;return true}return false}
 };
-function updateEdges(){const a=input.a(),b=input.b();if(a&&!prevA)edge.a=true;if(b&&!prevB)edge.b=true;prevA=a;prevB=b}
+function updateEdges(){
+  const a=input.a(),b=input.b(),z=input.z();
+  if(a&&!prevA)edge.a=true;if(b&&!prevB)edge.b=true;if(z&&!prevZ)edge.z=true;
+  prevA=a;prevB=b;prevZ=z;
+}
 addEventListener('keydown',e=>{keys.add(e.code);if(/^Digit[1-4]$/.test(e.code))setMode(+e.code.at(-1)-1);if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault()});
 addEventListener('keyup',e=>keys.delete(e.code));
 const pad=document.getElementById('pad'),knob=document.getElementById('knob');let pid=null;
@@ -34,14 +40,18 @@ pad.addEventListener('pointerdown',e=>{pid=e.pointerId;pad.setPointerCapture(pid
 pad.addEventListener('pointermove',e=>{if(e.pointerId===pid)joy(e)});
 function joyEnd(e){if(e.pointerId!==pid)return;pid=null;touch.x=touch.y=0;knob.style.transform=''}
 pad.addEventListener('pointerup',joyEnd);pad.addEventListener('pointercancel',joyEnd);
-for(const [id,k] of [['aBtn','a'],['bBtn','b']]){const el=document.getElementById(id);el.addEventListener('pointerdown',e=>{touch[k]=true;el.setPointerCapture(e.pointerId);e.preventDefault()});el.addEventListener('pointerup',()=>touch[k]=false);el.addEventListener('pointercancel',()=>touch[k]=false)}
+for(const [id,k] of [['zBtn','z'],['bBtn','b'],['aBtn','a']]){
+  const el=document.getElementById(id);if(!el)continue;
+  el.addEventListener('pointerdown',e=>{touch[k]=true;el.setPointerCapture(e.pointerId);e.preventDefault()});
+  el.addEventListener('pointerup',()=>touch[k]=false);el.addEventListener('pointercancel',()=>touch[k]=false);
+}
 document.querySelectorAll('.mode').forEach((b,i)=>b.addEventListener('click',()=>setMode(i)));
 function register(i,m){modes[i]=m;if(i===0&&!current)setMode(0)}
 function setMode(i){
  if(!modes[i])return; if(current&&current.exit)current.exit();
- modeIndex=i;current=modes[i];edge.a=edge.b=false;prevA=input.a();prevB=input.b();
+ modeIndex=i;current=modes[i];edge.a=edge.b=edge.z=false;prevA=input.a();prevB=input.b();prevZ=input.z();
  document.querySelectorAll('.mode').forEach((b,n)=>b.classList.toggle('active',n===i));
- const is3=!!current.is3D;canvas.style.display=is3?'none':'block';threeHost.style.display=is3?'block':'none';
+ const is3=!!current.is3D;canvas.style.display=is3?'none':'block';threeHost.style.display=is3?'flex':'none';
  if(current.enter)current.enter();resize();
 }
 function present(buf){
