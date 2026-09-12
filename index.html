@@ -1,1 +1,82 @@
-PLACEHOLDER
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Relic of Emberwood — True 3D Hero Demo</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111814;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#f4ecd9;touch-action:none}canvas{display:block;width:100%;height:100%;background:linear-gradient(#8ab9c4 0%,#bcd4c4 36%,#789869 37%,#496c42 100%)}
+#top{position:fixed;left:14px;right:14px;top:10px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;text-shadow:0 2px 5px #000}.brand{font-weight:900;letter-spacing:.7px;font-size:17px}.sub{font-size:11px;opacity:.85;margin-top:3px;max-width:520px}.badge{padding:7px 10px;border-radius:12px;background:#101711cc;border:1px solid #80906f80;font-size:11px;font-weight:800}
+#stick{position:fixed;left:22px;bottom:25px;width:132px;height:132px;border-radius:50%;border:2px solid #b3c3a855;background:radial-gradient(circle,#60765a88,#223128aa 68%);box-shadow:inset 0 0 30px #0008}.knob{position:absolute;width:56px;height:56px;left:36px;top:36px;border-radius:50%;background:radial-gradient(circle at 34% 28%,#cad4bf,#6d806a 55%,#39473a);box-shadow:0 5px 12px #0007,inset 0 -5px 8px #0005}
+#buttons{position:fixed;right:20px;bottom:26px;display:grid;grid-template-columns:68px 68px;gap:12px;align-items:end}.btn{width:68px;height:68px;border-radius:50%;border:2px solid #fff3;color:white;font-size:13px;font-weight:900;text-shadow:0 2px 3px #000;box-shadow:0 7px 15px #0008,inset 0 -7px 12px #0005;background:radial-gradient(circle at 35% 25%,#d46a55,#7a3026 72%)}#run{background:radial-gradient(circle at 35% 25%,#6c83d9,#34407f 72%)}
+#tools{position:fixed;right:16px;top:58px;display:flex;flex-direction:column;gap:7px}.small{background:#17231dcc;border:1px solid #95a68c66;color:#f5efdf;border-radius:9px;padding:8px 10px;font-weight:800;font-size:11px}
+#hint{position:fixed;left:50%;transform:translateX(-50%);bottom:8px;font-size:10px;opacity:.78;pointer-events:none;text-align:center}
+@media(max-width:520px){.sub{max-width:280px;font-size:9px}.brand{font-size:14px}#stick{width:116px;height:116px}.knob{left:29px;top:29px}.btn{width:61px;height:61px}#buttons{grid-template-columns:61px 61px}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="top"><div><div class="brand">RELIC OF EMBERWOOD — TRUE 3D HERO TEST</div><div class="sub">Procedural articulated 3D geometry with a stationary world camera: the hero physically moves across the scene with smooth 360° turning, articulated limbs, walk/run and attack animation.</div></div><div class="badge" id="readout">TRUE 3D · 0°</div></div>
+<div id="tools"><button class="small" id="cam">CAMERA: FIXED</button><button class="small" id="spin">AUTO TURN: OFF</button></div>
+<div id="stick"><div class="knob" id="knob"></div></div>
+<div id="buttons"><button class="btn" id="run">RUN</button><button class="btn" id="attack">ATTACK</button></div>
+<div id="hint">Move hero: joystick / WASD · Attack: A / Space · RUN button · Camera stays fixed · switch to ORBIT only to inspect model</div>
+<script>
+'use strict';
+const canvas=document.getElementById('c'), ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(2,devicePixelRatio||1);
+function resize(){W=innerWidth;H=innerHeight;canvas.width=Math.floor(W*DPR);canvas.height=Math.floor(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0)}addEventListener('resize',resize);resize();
+
+const V=(x=0,y=0,z=0)=>({x,y,z});
+const add=(a,b)=>V(a.x+b.x,a.y+b.y,a.z+b.z), sub=(a,b)=>V(a.x-b.x,a.y-b.y,a.z-b.z), mul=(a,s)=>V(a.x*s,a.y*s,a.z*s);
+const dot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z, cross=(a,b)=>V(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x), len=a=>Math.hypot(a.x,a.y,a.z)||1, norm=a=>mul(a,1/len(a));
+function rotXYZ(p,r){let x=p.x,y=p.y,z=p.z,c=Math.cos(r.x),s=Math.sin(r.x);let y1=y*c-z*s,z1=y*s+z*c;y=y1;z=z1;c=Math.cos(r.y);s=Math.sin(r.y);let x1=x*c+z*s,z2=-x*s+z*c;x=x1;z=z2;c=Math.cos(r.z);s=Math.sin(r.z);x1=x*c-y*s;let y2=x*s+y*c;return V(x1,y2,z)}
+class Node{constructor(name='',pos=V(),rot=V()){this.name=name;this.pos=pos;this.rot=rot;this.children=[];this.parts=[];this.parent=null}add(n){n.parent=this;this.children.push(n);return n}part(mesh,color,offset=V(),rot=V(),scale=V(1,1,1),shine=.15){this.parts.push({mesh,color,offset,rot,scale,shine});return this}}
+function box(w,h,d){let v=[V(-w/2,-h/2,-d/2),V(w/2,-h/2,-d/2),V(w/2,h/2,-d/2),V(-w/2,h/2,-d/2),V(-w/2,-h/2,d/2),V(w/2,-h/2,d/2),V(w/2,h/2,d/2),V(-w/2,h/2,d/2)];let f=[[0,1,2,3],[4,7,6,5],[0,4,5,1],[3,2,6,7],[1,5,6,2],[0,3,7,4]];return{v,f}}
+function cylinder(r,h,n=8){let v=[],f=[];for(let i=0;i<n;i++){let a=i*Math.PI*2/n;v.push(V(Math.cos(a)*r,-h/2,Math.sin(a)*r),V(Math.cos(a)*r,h/2,Math.sin(a)*r))}for(let i=0;i<n;i++){let j=(i+1)%n;f.push([i*2,j*2,j*2+1,i*2+1])}f.push([...Array(n)].map((_,i)=>i*2).reverse());f.push([...Array(n)].map((_,i)=>i*2+1));return{v,f}}
+function sphere(r,lat=5,lon=8){let v=[],f=[];for(let y=0;y<=lat;y++){let ph=y*Math.PI/lat;for(let x=0;x<lon;x++){let th=x*Math.PI*2/lon;v.push(V(Math.sin(ph)*Math.cos(th)*r,Math.cos(ph)*r,Math.sin(ph)*Math.sin(th)*r))}}for(let y=0;y<lat;y++)for(let x=0;x<lon;x++){let nx=(x+1)%lon,a=y*lon+x,b=y*lon+nx,c=(y+1)*lon+nx,d=(y+1)*lon+x;f.push([a,b,c,d])}return{v,f}}
+function cone(r,h,n=8){let v=[V(0,h/2,0)],f=[];for(let i=0;i<n;i++){let a=i*Math.PI*2/n;v.push(V(Math.cos(a)*r,-h/2,Math.sin(a)*r))}for(let i=0;i<n;i++)f.push([0,1+i,1+(i+1)%n]);f.push([...Array(n)].map((_,i)=>i+1).reverse());return{v,f}}
+function prism(points,depth=.12){let v=[],f=[],n=points.length;for(let z of [-depth/2,depth/2])for(let p of points)v.push(V(p[0],p[1],z));f.push([...Array(n)].map((_,i)=>i));f.push([...Array(n)].map((_,i)=>n+i).reverse());for(let i=0;i<n;i++)f.push([i,(i+1)%n,n+(i+1)%n,n+i]);return{v,f}}
+const meshes={head:sphere(.28,5,8),torso:box(.52,.72,.30),pelvis:box(.43,.23,.26),upper:cylinder(.105,.55,7),fore:cylinder(.09,.48,7),hand:sphere(.11,4,6),thigh:cylinder(.12,.62,7),calf:cylinder(.105,.58,7),boot:box(.22,.22,.38),ear:prism([[0,.12],[.25,0],[0,-.12]],.08),sword:box(.075,.86,.055),guard:box(.42,.065,.09),shield:cylinder(.33,.09,12),hood:cone(.32,.52,9),belt:box(.55,.09,.33)};
+function hexToRgb(h){h=h.replace('#','');if(h.length===3)h=[...h].map(x=>x+x).join('');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]}
+function shade(hex,k){let [r,g,b]=hexToRgb(hex);r=Math.max(0,Math.min(255,r*k));g=Math.max(0,Math.min(255,g*k));b=Math.max(0,Math.min(255,b*k));return`rgb(${r|0},${g|0},${b|0})`}
+
+const hero=new Node('root',V(0,0,0),V());
+const pelvis=hero.add(new Node('pelvis',V(0,1.02,0))).part(meshes.pelvis,'#476b37').part(meshes.belt,'#6b472d',V(0,.06,0));
+const torso=pelvis.add(new Node('torso',V(0,.48,0))).part(meshes.torso,'#4f7d3f');
+torso.part(box(.10,.78,.34),'#6b472d',V(.07,0,.01),V(0,0,-.38));
+const neck=torso.add(new Node('neck',V(0,.53,0)));
+const head=neck.add(new Node('head',V(0,.25,0))).part(meshes.head,'#e8b98e');
+head.part(meshes.ear,'#e8b98e',V(-.28,0,0),V(0,Math.PI,0),V(1,1,1)).part(meshes.ear,'#e8b98e',V(.28,0,0));
+head.part(meshes.hood,'#416d3e',V(0,.14,.03),V(0,0,.08),V(1,1.1,1));
+head.part(cone(.16,.35,7),'#c79655',V(0,.21,-.06),V(.7,0,0));
+function arm(side){let s=side==='L'?-1:1;let sh=torso.add(new Node('shoulder'+side,V(s*.37,.28,0),V(0,0,s*.04)));sh.part(meshes.upper,'#d3d7cb',V(0,-.27,0));let el=sh.add(new Node('elbow'+side,V(0,-.55,0)));el.part(meshes.fore,'#845d3a',V(0,-.23,0));let ha=el.add(new Node('hand'+side,V(0,-.49,0)));ha.part(meshes.hand,'#d9a77e');return{sh,el,ha}}
+const LA=arm('L'),RA=arm('R');
+function leg(side){let s=side==='L'?-1:1;let hip=pelvis.add(new Node('hip'+side,V(s*.14,-.13,0)));hip.part(meshes.thigh,'#d0cbb8',V(0,-.31,0));let knee=hip.add(new Node('knee'+side,V(0,-.62,0)));knee.part(meshes.calf,'#6b4b30',V(0,-.29,0));let foot=knee.add(new Node('foot'+side,V(0,-.60,.08)));foot.part(meshes.boot,'#5a3c28',V(0,-.03,.08));return{hip,knee,foot}}
+const LL=leg('L'),RL=leg('R');
+const swordNode=RA.ha.add(new Node('sword',V(0,-.12,0),V(0,0,0)));swordNode.part(meshes.sword,'#cbd2d5',V(0,-.45,0),V(),V(1,1,1),.8).part(meshes.guard,'#c6a351',V(0,-.03,0));
+const shieldNode=LA.el.add(new Node('shield',V(-.17,-.23,.05),V(Math.PI/2,0,0)));shieldNode.part(meshes.shield,'#805532').part(cylinder(.22,.105,12),'#4f7b40',V(0,.006,0));
+
+const sceneRoot=new Node('scene');
+function tree(x,z,s=1){let n=sceneRoot.add(new Node('tree',V(x,0,z)));n.part(cylinder(.13*s,.9*s,7),'#6c4a2e',V(0,.45*s,0));n.part(cone(.65*s,1.2*s,9),'#315f35',V(0,1.25*s,0));n.part(cone(.48*s,.95*s,9),'#3d7440',V(0,1.75*s,0));return n}
+function rock(x,z,s=1){sceneRoot.add(new Node('rock',V(x,.18*s,z))).part(sphere(.35*s,3,7),'#6f746c',V(),V(),V(1.25,.7,1));}
+tree(-2.8,-2.5,1.05);tree(3.2,-3.5,.9);tree(-3.8,2.6,.75);rock(2.6,2.4,1.1);rock(-2.0,1.8,.7);
+
+let camMode=0,camYaw=.65,camPitch=.50,camDist=7.1,autoTurn=false;
+let player={x:0,z:0,yaw:0,targetYaw:0,speed:0,phase:0,run:false,attack:0};
+let input={x:0,y:0};
+function camera(){let target=camMode===0?V(0,1.05,0):V(player.x,1.15,player.z),yaw=camYaw,pitch=camPitch,dist=camDist;let cp=Math.cos(pitch),sp=Math.sin(pitch);let pos=V(target.x+Math.sin(yaw)*cp*dist,target.y+sp*dist,target.z+Math.cos(yaw)*cp*dist);return{pos,target}}
+function worldTransformPoint(p,node){let chain=[];for(let n=node;n;n=n.parent)chain.push(n);let q=V(p.x,p.y,p.z);for(let i=0;i<chain.length;i++){let n=chain[i];q=add(rotXYZ(q,n.rot),n.pos)}return q}
+function collectNode(node,out){for(let part of node.parts){let vv=part.mesh.v.map(p=>{let q=V(p.x*part.scale.x,p.y*part.scale.y,p.z*part.scale.z);q=rotXYZ(q,part.rot);q=add(q,part.offset);return worldTransformPoint(q,node)});for(let fi=0;fi<part.mesh.f.length;fi++){let face=part.mesh.f[fi],pts=face.map(i=>vv[i]);if(pts.length>=3){let normal=norm(cross(sub(pts[1],pts[0]),sub(pts[2],pts[0])));out.push({pts,normal,color:part.color,shine:part.shine})}}}for(let c of node.children)collectNode(c,out)}
+function projectWorld(p,cam){let f=norm(sub(cam.target,cam.pos)),right=norm(cross(f,V(0,1,0))),up=cross(right,f),q=sub(p,cam.pos);let X=dot(q,right),Y=dot(q,up),Z=dot(q,f);if(Z<.08)return null;let focal=Math.min(W,H)*.92;return{x:W/2+X/Z*focal,y:H*.46-Y/Z*focal,z:Z}}
+function render(){ctx.clearRect(0,0,W,H);let c=camera();let sky=ctx.createLinearGradient(0,0,0,H*.58);sky.addColorStop(0,'#7aaab4');sky.addColorStop(1,'#c8d8c7');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H*.58);let grd=ctx.createLinearGradient(0,H*.48,0,H);grd.addColorStop(0,'#7f9f6a');grd.addColorStop(1,'#3d633b');ctx.fillStyle=grd;ctx.fillRect(0,H*.48,W,H*.52);ctx.save();ctx.globalAlpha=.15;ctx.strokeStyle='#203424';ctx.lineWidth=1;for(let i=-8;i<=8;i++){let a=projectWorld(V(i*.7,0,-6),c),b=projectWorld(V(i*.7,0,6),c);if(a&&b){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}a=projectWorld(V(-6,0,i*.7),c);b=projectWorld(V(6,0,i*.7),c);if(a&&b){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}ctx.restore();let faces=[];collectNode(sceneRoot,faces);collectNode(hero,faces);let projected=[],light=norm(V(-.5,.9,.35));for(let f of faces){let ps=f.pts.map(p=>projectWorld(p,c));if(ps.some(p=>!p))continue;let depth=ps.reduce((s,p)=>s+p.z,0)/ps.length;let lit=.54+Math.max(0,dot(f.normal,light))*.55;projected.push({ps,depth,color:shade(f.color,lit)})}projected.sort((a,b)=>b.depth-a.depth);for(let f of projected){ctx.beginPath();ctx.moveTo(f.ps[0].x,f.ps[0].y);for(let i=1;i<f.ps.length;i++)ctx.lineTo(f.ps[i].x,f.ps[i].y);ctx.closePath();ctx.fillStyle=f.color;ctx.fill();ctx.strokeStyle='rgba(20,25,20,.18)';ctx.lineWidth=.55;ctx.stroke()}}
+function shortest(a,b){let d=(b-a+Math.PI)%(Math.PI*2)-Math.PI;return d<-Math.PI?d+Math.PI*2:d}
+function animate(dt){let mx=input.x,my=input.y;let keysX=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0);let keysY=(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0);if(Math.hypot(keysX,keysY)>.1){mx=keysX;my=keysY}let mag=Math.min(1,Math.hypot(mx,my));if(autoTurn&&!mag){player.targetYaw+=dt*.75;player.speed=0}else if(mag>.08){player.targetYaw=Math.atan2(mx,my);player.speed=(player.run?2.6:1.55)*mag;player.x+=Math.sin(player.targetYaw)*player.speed*dt;player.z+=Math.cos(player.targetYaw)*player.speed*dt;player.x=Math.max(-4.6,Math.min(4.6,player.x));player.z=Math.max(-4.6,Math.min(4.6,player.z));player.phase+=dt*player.speed*(player.run?6.3:5)}else player.speed=0;player.yaw+=shortest(player.yaw,player.targetYaw)*Math.min(1,dt*10);hero.pos.x=player.x;hero.pos.z=player.z;hero.rot.y=player.yaw;let moving=player.speed>0.05,sw=moving?Math.sin(player.phase):0,sw2=moving?Math.sin(player.phase+Math.PI):0,runAmp=player.run?.85:.55;pelvis.pos.y=1.02+(moving?Math.abs(Math.sin(player.phase))*0.035:Math.sin(performance.now()/600)*.008);torso.rot.z=moving?sw*.025:0;torso.rot.y=moving?sw*.035:0;LL.hip.rot.x=sw*runAmp;RL.hip.rot.x=sw2*runAmp;LL.knee.rot.x=Math.max(0,-sw)*(.65+(player.run?.25:0));RL.knee.rot.x=Math.max(0,-sw2)*(.65+(player.run?.25:0));LA.sh.rot.x=sw2*(player.run?.70:.46);RA.sh.rot.x=sw*(player.run?.70:.46);LA.el.rot.x=-.18+Math.max(0,sw)*.32;RA.el.rot.x=-.18+Math.max(0,sw2)*.32;head.rot.y=moving?Math.sin(player.phase*.5)*.035:Math.sin(performance.now()/1200)*.025;if(player.attack>0){player.attack=Math.max(0,player.attack-dt);let t=1-player.attack/.48;let arc=Math.sin(Math.min(1,t)*Math.PI);RA.sh.rot.z=-.35-arc*1.65;RA.sh.rot.x=-.5+Math.cos(t*Math.PI)*.25;RA.el.rot.z=-.3-arc*.55;swordNode.rot.x=-.35}else{swordNode.rot.x=0;RA.sh.rot.z=0;RA.el.rot.z=0}document.getElementById('readout').textContent=`TRUE 3D · ${(player.yaw*180/Math.PI+360)%360|0}° · ${player.run?'RUN':'WALK'}`}
+let last=performance.now();function loop(now){let dt=Math.min(.033,(now-last)/1000);last=now;animate(dt);render();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+const keys=new Set();addEventListener('keydown',e=>{keys.add(e.code);if(e.code==='Space'||e.code==='Enter'){player.attack=.48;e.preventDefault()}if(e.code==='ShiftLeft'||e.code==='ShiftRight')player.run=true});addEventListener('keyup',e=>{keys.delete(e.code);if(e.code.startsWith('Shift'))player.run=false});
+const stick=document.getElementById('stick'),knob=document.getElementById('knob');let stickId=null;function joy(e){let r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,R=r.width*.34,m=Math.hypot(dx,dy);if(m>R){dx*=R/m;dy*=R/m}input.x=dx/R;input.y=dy/R;knob.style.transform=`translate(${dx}px,${dy}px)`}stick.addEventListener('pointerdown',e=>{stickId=e.pointerId;stick.setPointerCapture(e.pointerId);joy(e)});stick.addEventListener('pointermove',e=>{if(e.pointerId===stickId)joy(e)});function endJoy(e){if(e.pointerId!==stickId)return;stickId=null;input.x=input.y=0;knob.style.transform=''}stick.addEventListener('pointerup',endJoy);stick.addEventListener('pointercancel',endJoy);
+const atk=document.getElementById('attack');atk.addEventListener('pointerdown',e=>{player.attack=.48;e.preventDefault()});const run=document.getElementById('run');run.addEventListener('pointerdown',e=>{player.run=true;run.setPointerCapture(e.pointerId)});run.addEventListener('pointerup',()=>player.run=false);run.addEventListener('pointercancel',()=>player.run=false);
+let drag=false,px=0,py=0;canvas.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;canvas.setPointerCapture(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(!drag||camMode===0)return;let dx=e.clientX-px,dy=e.clientY-py;px=e.clientX;py=e.clientY;camYaw-=dx*.008;camPitch=Math.max(.12,Math.min(1.15,camPitch+dy*.006))});canvas.addEventListener('pointerup',()=>drag=false);canvas.addEventListener('wheel',e=>{camDist=Math.max(3.2,Math.min(10,camDist+e.deltaY*.006));e.preventDefault()},{passive:false});
+document.getElementById('cam').onclick=()=>{camMode=1-camMode;document.getElementById('cam').textContent='CAMERA: '+(camMode?'ORBIT':'FIXED')};document.getElementById('spin').onclick=()=>{autoTurn=!autoTurn;document.getElementById('spin').textContent='AUTO TURN: '+(autoTurn?'ON':'OFF')};
+</script>
+</body></html>
